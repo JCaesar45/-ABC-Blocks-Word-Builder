@@ -1,0 +1,108 @@
+// Sesame Street-themed ABC Blocks Game
+
+const blocks = [
+    ['B', 'O'], ['X', 'K'], ['D', 'Q'], ['C', 'P'], ['N', 'A'],
+    ['G', 'T'], ['R', 'E'], ['T', 'G'], ['Q', 'D'], ['F', 'S'],
+    ['J', 'W'], ['H', 'U'], ['V', 'I'], ['A', 'N'], ['O', 'B'],
+    ['E', 'R'], ['F', 'S'], ['L', 'Y'], ['P', 'C'], ['Z', 'M']
+];
+
+let usedBlocks = [];
+let draggableBlocks = [];
+
+const wordInput = document.getElementById('wordInput');
+const checkButton = document.getElementById('checkButton');
+const resetButton = document.getElementById('resetButton');
+const blocksContainer = document.getElementById('blocksContainer');
+const resultMessage = document.getElementById('resultMessage');
+
+// Initialize the game
+function init() {
+    usedBlocks = [];
+    blocksContainer.innerHTML = '';
+    resultMessage.innerHTML = '';
+
+    // Create draggable blocks
+    blocks.forEach((pair, index) => {
+        const blockDiv = document.createElement('div');
+        blockDiv.className = 'block';
+        blockDiv.draggable = true;
+        blockDiv.dataset.index = index;
+        blockDiv.innerHTML = pair.join('');
+        blockDiv.addEventListener('dragstart', dragStart);
+        blocksContainer.appendChild(blockDiv);
+        draggableBlocks.push(blockDiv);
+    });
+}
+
+// Drag and Drop Handlers
+function dragStart(e) {
+    e.dataTransfer.setData('text/plain', e.target.dataset.index);
+}
+
+function allowDrop(e) {
+    e.preventDefault();
+}
+
+function drop(e) {
+    e.preventDefault();
+    const index = e.dataTransfer.getData('text/plain');
+    const blockDiv = draggableBlocks[index];
+
+    // Check if this block is already used
+    if (blockDiv.dataset.used === 'true') return;
+
+    // Mark as used
+    blockDiv.dataset.used = 'true';
+    blockDiv.style.opacity = '0.5';
+
+    // Append to drop zone
+    e.currentTarget.appendChild(blockDiv);
+    blockDiv.removeEventListener('dragstart', dragStart);
+}
+
+// Check if the word can be made
+function canMakeWord(word) {
+    const tempUsed = new Array(blocks.length).fill(false);
+    const upperWord = word.toUpperCase();
+
+    for (const char of upperWord) {
+        let found = false;
+        for (let i = 0; i < blocks.length; i++) {
+            if (!tempUsed[i]) {
+                if (blocks[i][0] === char || blocks[i][1] === char) {
+                    tempUsed[i] = true;
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (!found) return false;
+    }
+    return true;
+}
+
+// Handle check button
+document.getElementById('checkButton').addEventListener('click', () => {
+    const word = wordInput.value.trim();
+    if (!word) {
+        resultMessage.innerHTML = 'Please enter a word!';
+        return;
+    }
+    const result = canMakeWord(word);
+    if (result) {
+        resultMessage.innerHTML = `<span style="color: green;">Great job! You can spell "${word}".</span>`;
+    } else {
+        resultMessage.innerHTML = `<span style="color: red;">Oops! You cannot spell "${word}" with the blocks.</span>`;
+    }
+});
+
+// Handle reset button
+document.getElementById('resetButton').addEventListener('click', () => {
+    wordInput.value = '';
+    resultMessage.innerHTML = '';
+    init();
+});
+
+// Initialize on page load
+window.onload = init;
